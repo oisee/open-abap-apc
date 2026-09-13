@@ -52,7 +52,10 @@ CLASS zcl_apc_host DEFINITION PUBLIC CREATE PUBLIC.
   PRIVATE SECTION.
     DATA mv_handler TYPE string.
     DATA mo_ext     TYPE REF TO if_apc_wsp_extension.
-    DATA mo_context TYPE REF TO if_apc_wsp_server_context.
+*   the concrete class, because the two context interfaces are independent
+*   the way a system declares them and one callback takes each: the class
+*   answers both, a reference to one of them does not
+    DATA mo_context TYPE REF TO zcl_apc_context.
     DATA mo_manager TYPE REF TO zcl_apc_message_manager.
     DATA mv_open    TYPE abap_bool.
 ENDCLASS.

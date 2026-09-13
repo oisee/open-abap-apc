@@ -1,8 +1,8 @@
 INTERFACE if_apc_wsp_binding_manager PUBLIC.
-  METHODS bind_amc_message_consumer
-    IMPORTING
-      i_application_id TYPE clike
-      i_channel_id     TYPE clike
-    RAISING
-      cx_apc_error.
+* An alias shell over if_apc_ws_binding_manager, the same pattern as the
+* initial request.
+  INTERFACES if_apc_ws_binding_manager.
+
+  ALIASES bind_amc_message_consumer FOR if_apc_ws_binding_manager~bind_amc_message_consumer.
+  ALIASES unbind_amc_message_consumer FOR if_apc_ws_binding_manager~unbind_amc_message_consumer.
 ENDINTERFACE.
