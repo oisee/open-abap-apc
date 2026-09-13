@@ -35,6 +35,26 @@ hundred to a few thousand primitives) should cost the same order, well
 inside the 40 ms of 25 frames per second; a per-pixel effect at 640x400
 would not, it is a hundred times more cells.
 
+## In a page, with no server
+
+`web/apc-socket.mjs` puts a WebSocket-shaped object in front of the host, so
+a page written for APC talks to a handler that is in the page:
+
+    import {install} from "./web/apc-socket.mjs";
+    install({handler: "ZCL_O4D_APC_HANDLER"});
+    // the page's own `new WebSocket("ws://host/sap/bc/apc/sap/x")` now
+    // reaches that handler, and its frames arrive as messages
+
+Nothing is framed and no network is touched; it is the trick
+express-icf-shim plays for ICF, one layer up. A url that is not an APC one is
+handed back to the real WebSocket, so a page that also talks to something
+real keeps it. `npm run test:web` checks the seam against the plasma handler:
+a config frame on connect, a frame per request, and an unknown handler that
+fails the socket rather than the process.
+
+Measured with oisee/vivid-vibes' own handler behind it: five frame requests,
+six messages back, 2994 bytes, and the first message is that demo's config.
+
 ## In an engine that is not V8
 
 `probe/` runs the same transpiled ABAP in goja, the pure-Go engine, for the

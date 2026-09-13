@@ -8,7 +8,8 @@
     "lint": "abaplint",
     "transpile": "rm -rf output && abap_transpile",
     "unit": "npm run transpile && node output/index.mjs && echo OK",
-    "bench": "npm run transpile && node tools/bench.mjs"
+    "bench": "npm run transpile && node tools/bench.mjs",
+    "test:web": "node web/apc-socket.test.mjs"
   },
   "license": "MIT"
 }
