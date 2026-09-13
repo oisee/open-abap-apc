@@ -1,0 +1,14 @@
+{
+  "name": "open-abap-apc",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "ABAP Push Channels off a system: a handler runs where there is no ICF, driven by a host that a page, a websocket server or a worker feeds",
+  "scripts": {
+    "lint": "abaplint",
+    "transpile": "rm -rf output && abap_transpile",
+    "unit": "npm run transpile && node output/index.mjs && echo OK",
+    "bench": "npm run transpile && node tools/bench.mjs"
+  },
+  "license": "MIT"
+}

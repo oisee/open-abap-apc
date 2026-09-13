@@ -1,0 +1,44 @@
+{
+  "global": {
+    "files": "/{src,test}/**/*.*",
+    "errorOnDuplicateFilenames": true
+  },
+  "dependencies": [
+    {
+      "url": "https://github.com/open-abap/open-abap-core",
+      "folder": "/deps/open-abap-core",
+      "files": "/src/{abap,adbc,bcs,bigint,classrun,conv,date_time,ddic,demo,exceptions,fdt,fugr,http,ixml,json,kernel,memory,numberrange,oauth2,oo,package,persistence,rtti,shma,smim,sxml,unit,uuid,w3mi,xco}/**/*.*"
+    }
+  ],
+  "syntax": {
+    "version": "open-abap",
+    "errorNamespace": "."
+  },
+  "rules": {
+    "parser_error": true,
+    "check_syntax": true,
+    "unknown_types": true,
+    "implement_methods": true,
+    "method_implemented_twice": true,
+    "check_abstract": true,
+    "begin_end_names": true,
+    "unreachable_code": true,
+    "contains_tab": true,
+    "whitespace_end": true,
+    "keyword_case": {
+      "style": "upper",
+      "ignoreExceptions": true,
+      "ignoreLowerClassImplmentationStatement": true
+    },
+    "indentation": {
+      "ignoreExceptions": true,
+      "alignTryCatch": false
+    },
+    "max_one_statement": true,
+    "space_before_dot": true,
+    "line_only_punc": true,
+    "empty_statement": true,
+    "obsolete_statement": true,
+    "when_others_last": true
+  }
+}

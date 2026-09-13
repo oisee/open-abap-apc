@@ -1,0 +1,53 @@
+{
+  "input_folder": [
+    "src",
+    "test"
+  ],
+  "output_folder": "output",
+  "write_unit_tests": true,
+  "libs": [
+    {
+      "url": "https://github.com/open-abap/open-abap-core",
+      "folder": "/deps/open-abap-core",
+      "files": [
+        "/src/abap/**",
+        "/src/adbc/**",
+        "/src/bcs/**",
+        "/src/bigint/**",
+        "/src/classrun/**",
+        "/src/conv/**",
+        "/src/date_time/**",
+        "/src/ddic/**",
+        "/src/demo/**",
+        "/src/exceptions/**",
+        "/src/fdt/**",
+        "/src/fugr/**",
+        "/src/http/**",
+        "/src/ixml/**",
+        "/src/json/**",
+        "/src/kernel/**",
+        "/src/memory/**",
+        "/src/numberrange/**",
+        "/src/oauth2/**",
+        "/src/oo/**",
+        "/src/package/**",
+        "/src/persistence/**",
+        "/src/rtti/**",
+        "/src/shma/**",
+        "/src/smim/**",
+        "/src/sxml/**",
+        "/src/unit/**",
+        "/src/uuid/**",
+        "/src/w3mi/**",
+        "/src/xco/**",
+        "/src/*.*"
+      ]
+    }
+  ],
+  "options": {
+    "ignoreSyntaxCheck": false,
+    "addFilenames": true,
+    "addCommonJS": true,
+    "unknownTypes": "compileError"
+  }
+}
