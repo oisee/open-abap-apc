@@ -45,9 +45,9 @@ CLASS zcl_apc_message IMPLEMENTATION.
   METHOD if_apc_wsp_message~get_message_type.
 *   what this message carries, in the constants a system uses
     IF mv_binary IS NOT INITIAL.
-      r_message_type = if_apc_wsp_message=>co_message_type_binary.
+      r_type = if_apc_wsp_message=>co_message_type_binary.
     ELSE.
-      r_message_type = if_apc_wsp_message=>co_message_type_text.
+      r_type = if_apc_wsp_message=>co_message_type_text.
     ENDIF.
   ENDMETHOD.
 

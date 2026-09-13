@@ -24,6 +24,9 @@ CLASS cx_apc_error DEFINITION PUBLIC INHERITING FROM cx_static_check CREATE PUBL
     CONSTANTS request_field_access_failed TYPE sotr_conc VALUE 'E61F13F7B4071ED28DA8950C81A85867' ##NO_TEXT.
     CONSTANTS connection_is_not_established TYPE sotr_conc VALUE 'E41F13F734061ED4BBC880043C484D01' ##NO_TEXT.
     CONSTANTS method_call_is_not_supported TYPE sotr_conc VALUE '005056B400AC1EE1BDCE7F01FAEA0D22' ##NO_TEXT.
+*   misspelt on a system, and therefore misspelt here: a CATCH is written
+*   against the name SAP shipped
+    CONSTANTS method_in_state_not_suppoerted TYPE sotr_conc VALUE 'E41F13F734061ED4ACD07D6FAF75D626' ##NO_TEXT.
     CONSTANTS apc_application_not_available TYPE sotr_conc VALUE 'E41F13F734061EE4AADD8222BDF3CA75' ##NO_TEXT.
     CONSTANTS apc_application_is_stateful TYPE sotr_conc VALUE 'E41F13F734061EE4AADD8BB4D50ECAC3' ##NO_TEXT.
     CONSTANTS invalid_parameter_value TYPE sotr_conc VALUE 'E61F13F7B4071EE29DD6352E2A4BD12D' ##NO_TEXT.

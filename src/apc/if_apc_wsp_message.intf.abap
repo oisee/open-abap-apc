@@ -12,7 +12,7 @@ INTERFACE if_apc_wsp_message PUBLIC.
   CONSTANTS co_message_type_binary TYPE i VALUE 2.
 
   METHODS get_message_type
-    RETURNING VALUE(r_message_type) TYPE i
+    RETURNING VALUE(r_type) TYPE i
     RAISING cx_apc_error.
 
   METHODS get_binary

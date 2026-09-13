@@ -9,12 +9,14 @@ INTERFACE if_apc_ws_binding_manager PUBLIC.
   TYPES ty_amc_appl_id TYPE if_abap_channel_types=>ty_amc_application_id.
   TYPES ty_amc_channel_id TYPE if_abap_channel_types=>ty_amc_channel_id.
   TYPES ty_amc_channel_ext_id TYPE if_abap_channel_types=>ty_amc_channel_extension_id.
+  TYPES ty_amc_channel_filter TYPE if_abap_channel_types=>ty_amc_channel_filter.
 
   METHODS bind_amc_message_consumer
     IMPORTING
       !i_application_id       TYPE ty_amc_appl_id
       !i_channel_id           TYPE ty_amc_channel_id
       !i_channel_extension_id TYPE ty_amc_channel_ext_id OPTIONAL
+      !i_channel_filter       TYPE ty_amc_channel_filter OPTIONAL
     RAISING cx_apc_error.
 
   METHODS unbind_amc_message_consumer

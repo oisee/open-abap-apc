@@ -15,9 +15,9 @@ INTERFACE if_abap_channel_types PUBLIC.
 *
 * Left out on purpose, because nobody has read them and a plausible shape
 * is worse than an absent one: ty_apc_tcp_frame, ty_vscan_profile,
-* ty_ssfapplssl, ty_apc_proxy, ty_apc_connect_options, ty_seoclsname,
-* ty_amc_channel_filter. A handler that uses one will not compile here, and
-* that is the honest answer until it is read.
+* ty_ssfapplssl, ty_apc_proxy, ty_apc_connect_options, ty_seoclsname. A
+* handler that uses one will not compile here, and that is the honest answer
+* until it is read.
   TYPES ty_ihttpnvp TYPE ihttpnvp.
   TYPES ty_tihttpnvp TYPE STANDARD TABLE OF ty_ihttpnvp WITH DEFAULT KEY.
 
@@ -41,4 +41,14 @@ INTERFACE if_abap_channel_types PUBLIC.
   TYPES ty_amc_channel_id TYPE string.
   TYPES ty_amc_channel_extension_id TYPE c LENGTH 60.
   TYPES ty_amc_consumer_session_id TYPE string.
+
+* AMC_CHANNEL_FILTER is a table of AMC_FILTER_ELEMENT, whose two field names
+* are a system's. Their widths are not: the elements
+* SSI_AMC_FILTER_ELEMENT_NAME and _VALUE have not been read, and string is
+* the type that makes no claim about a width rather than a guess at one.
+  TYPES: BEGIN OF ty_amc_filter_element,
+           name  TYPE string,
+           value TYPE string,
+         END OF ty_amc_filter_element.
+  TYPES ty_amc_channel_filter TYPE STANDARD TABLE OF ty_amc_filter_element WITH DEFAULT KEY.
 ENDINTERFACE.
