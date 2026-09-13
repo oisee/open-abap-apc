@@ -1,3 +1,6 @@
 node_modules
 deps
 output
+probe/node_modules
+probe/build
+probe/goja/probe

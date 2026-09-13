@@ -7,7 +7,7 @@
     {
       "url": "https://github.com/open-abap/open-abap-core",
       "folder": "/deps/open-abap-core",
-      "files": "/src/{abap,adbc,bcs,bigint,classrun,conv,date_time,ddic,demo,exceptions,fdt,fugr,http,ixml,json,kernel,memory,numberrange,oauth2,oo,package,persistence,rtti,shma,smim,sxml,unit,uuid,w3mi,xco}/**/*.*"
+      "files": "/src/{abap,adbc,bcs,bigint,classrun,conv,date_time,ddic,demo,exceptions,fdt,fugr,http,ixml,kernel,memory,numberrange,oauth2,oo,package,persistence,rtti,shma,smim,sxml,unit,uuid,w3mi,xco}/**/*.*"
     }
   ],
   "syntax": {

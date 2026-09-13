@@ -24,7 +24,6 @@
         "/src/fugr/**",
         "/src/http/**",
         "/src/ixml/**",
-        "/src/json/**",
         "/src/kernel/**",
         "/src/memory/**",
         "/src/numberrange/**",
