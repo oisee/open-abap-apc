@@ -27,12 +27,16 @@ CLASS zcl_apc_host DEFINITION PUBLIC CREATE PUBLIC.
         cx_apc_error.
 
     METHODS close
+      IMPORTING
+        !iv_reason TYPE string DEFAULT 'closed by the host'
+        !iv_code   TYPE i      DEFAULT 1000
       RAISING
         cx_apc_error.
 
     METHODS error
       IMPORTING
-        iv_reason TYPE string
+        !iv_reason TYPE string
+        !iv_code   TYPE i DEFAULT 1011
       RAISING
         cx_apc_error.
 
@@ -76,7 +80,7 @@ CLASS zcl_apc_host IMPLEMENTATION.
   METHOD open.
     DATA lv_mode TYPE i.
 
-    mo_ext->on_accept( EXPORTING i_context      = mo_context
+    mo_ext->on_accept( EXPORTING i_context_base = mo_context
                        IMPORTING e_connect_mode = lv_mode ).
     IF lv_mode = if_apc_wsp_extension=>co_connect_mode_reject.
       rv_accepted = abap_false.
@@ -107,14 +111,15 @@ CLASS zcl_apc_host IMPLEMENTATION.
       RETURN.
     ENDIF.
     mv_open = abap_false.
-    mo_ext->on_close( i_context         = mo_context
-                      i_message_manager = mo_manager ).
+    mo_ext->on_close( i_reason       = iv_reason
+                      i_code         = iv_code
+                      i_context_base = mo_context ).
   ENDMETHOD.
 
   METHOD error.
-    mo_ext->on_error( i_context         = mo_context
-                      i_message_manager = mo_manager
-                      i_reason          = iv_reason ).
+    mo_ext->on_error( i_reason       = iv_reason
+                      i_code         = iv_code
+                      i_context_base = mo_context ).
   ENDMETHOD.
 
   METHOD drain.

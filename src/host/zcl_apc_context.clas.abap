@@ -22,7 +22,7 @@ CLASS zcl_apc_context IMPLEMENTATION.
     CREATE OBJECT mo_binding.
   ENDMETHOD.
 
-  METHOD if_apc_wsp_server_context~get_initial_request.
+  METHOD if_apc_wsp_server_context_base~get_initial_request.
     r_initial_request = mo_request.
   ENDMETHOD.
 
