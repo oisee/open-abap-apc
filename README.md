@@ -35,6 +35,33 @@ hundred to a few thousand primitives) should cost the same order, well
 inside the 40 ms of 25 frames per second; a per-pixel effect at 640x400
 would not, it is a hundred times more cells.
 
+## In an engine that is not V8
+
+`probe/` runs the same transpiled ABAP in goja, the pure-Go engine, for the
+question "can steamgate be embedded in one Go binary with no cgo". webpack
+makes one classic script (top level await on, a single chunk, the library
+export is a promise), Babel lowers the async generators
+(`@babel/plugin-transform-async-generator-functions`), and `probe/goja` runs
+it with an event loop.
+
+Raw, goja refuses the bundle: `Unexpected token await`, 14035 errors, because
+`abap.statements.loop` is an async generator and every LOOP AT consumes it.
+Lowered, it loads in 0.2 s and answers exactly as Node does. Three shims are
+needed and no more (`probe/shim.js`): `Intl.DateTimeFormat`, Node's `Buffer`,
+and `WeakRef`.
+
+Measured 2026-09-13, goja v0.0.0-20260911104922, Node 26:
+
+| what | Node | goja |
+|---|---|---|
+| a Gateway read: 1000 rows, filter, map, 13 KB of JSON | 1.95 ms | 36 ms |
+| the same over 100 rows, 20 out | 0.8 ms | 7.5 ms |
+| a frame of the 64x40 plasma | 4 ms | 174 ms |
+
+So twenty to forty times slower, in absolute terms tens of milliseconds for a
+request shaped like an OData read: usable for a service, not for a demo at 25
+frames a second.
+
 ## Running
 
     npm run lint      abaplint, 0 issues

@@ -8,6 +8,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/dop251/goja"
@@ -24,7 +25,8 @@ const driver = `
     var booted = await m.boot();
     var probe = await m.probe();
     var frames = await m.frames(FRAMES);
-    globalThis.__out = JSON.stringify({booted: booted, probe: probe, frames: JSON.parse(frames)});
+    var odata = await m.odata(ODATA_REQUESTS, ODATA_ROWS, ODATA_TOP);
+    globalThis.__out = JSON.stringify({booted: booted, probe: probe, frames: JSON.parse(frames), odata: JSON.parse(odata)});
   }).catch(function (e) {
     globalThis.__err = String((e && e.stack) || e);
   });
@@ -44,6 +46,16 @@ func main() {
 	frames := "100"
 	if len(os.Args) > 2 {
 		frames = os.Args[2]
+	}
+	requests, rows, top := "20", "1000", "100"
+	if len(os.Args) > 3 {
+		requests = os.Args[3]
+	}
+	if len(os.Args) > 4 {
+		rows = os.Args[4]
+	}
+	if len(os.Args) > 5 {
+		top = os.Args[5]
 	}
 
 	registry := new(require.Registry)
@@ -71,7 +83,7 @@ func main() {
 		}
 		loadMs = time.Since(started).Milliseconds()
 
-		if _, err := vm.RunString(replaceFrames(driver, frames)); err != nil {
+		if _, err := vm.RunString(replace(replace(replace(replace(driver, "ODATA_REQUESTS", requests), "ODATA_ROWS", rows), "ODATA_TOP", top), "FRAMES", frames)); err != nil {
 			loadErr = fmt.Errorf("driving it: %w", err)
 			return
 		}
@@ -93,15 +105,6 @@ func main() {
 	fmt.Printf("bundle loaded in %d ms\n%s\n", loadMs, out.String())
 }
 
-func replaceFrames(s, frames string) string {
-	out := ""
-	for i := 0; i < len(s); i++ {
-		if i+6 <= len(s) && s[i:i+6] == "FRAMES" {
-			out += frames
-			i += 5
-			continue
-		}
-		out += string(s[i])
-	}
-	return out
+func replace(s, needle, with string) string {
+	return strings.ReplaceAll(s, needle, with)
 }

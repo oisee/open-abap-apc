@@ -10,3 +10,6 @@ const APC = await (0, eval)(source + "; APC");
 console.log(await APC.boot());
 console.log("probe:", await APC.probe());
 console.log("frames:", await APC.frames(Number(process.argv[3] ?? 100)));
+if (process.argv[4]) {
+  console.log("odata:", await APC.odata(Number(process.argv[4]), Number(process.argv[5] ?? 1000), Number(process.argv[6] ?? 100)));
+}
