@@ -1,5 +1,13 @@
 # open-abap-apc
 
+> **Staging, not a rival.** This is where the ABAP Push Channel family is
+> being proven before it is offered to
+> [open-abap-core](https://github.com/open-abap/open-abap-core), which is
+> where these SAP-named interfaces belong. It exists as its own repository
+> because a library has to have a URL for a build on a clean machine to
+> resolve it — not because the code wants a separate home. MIT, like
+> everything else in the family.
+
 ABAP Push Channels where there is no system. A handler written for SAP APC
 (`cl_apc_wsp_ext_stateful_base`, `if_apc_wsp_extension`) runs unchanged; the
 ICF is replaced by a host that anyone can drive: a websocket server in Node,

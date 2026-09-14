@@ -42,7 +42,11 @@ export class ApcSocket {
     this.listeners = new Map();
 
     this.handler = options.handler ?? "ZCL_APC_DEMO_HANDLER";
-    this.abap = options.abap ?? globalThis.abap;
+    // a page's own script may open its socket before the runtime has
+    // finished booting: install( ) is synchronous so the constructor is
+    // never missed, and the boot is awaited here instead
+    this.ready = options.ready;
+    this.abap = options.abap;
     this.host = undefined;
     this.queue = Promise.resolve();
 
@@ -98,6 +102,10 @@ export class ApcSocket {
 
   async #open() {
     try {
+      if (this.ready !== undefined) {
+        await this.ready;
+      }
+      this.abap = this.abap ?? globalThis.abap;
       const host = this.abap?.Classes?.["ZCL_APC_HOST"];
       if (host === undefined) {
         throw new Error("ApcSocket: ZCL_APC_HOST is not in the runtime, transpile open-abap-apc first");
