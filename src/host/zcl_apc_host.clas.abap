@@ -49,6 +49,9 @@ CLASS zcl_apc_host DEFINITION PUBLIC CREATE PUBLIC.
       RETURNING
         VALUE(rv_open) TYPE abap_bool.
 
+    METHODS bindings
+      RETURNING VALUE(rt_bindings) TYPE zcl_apc_binding_manager=>tt_binding.
+
   PRIVATE SECTION.
     DATA mv_handler TYPE string.
     DATA mo_ext     TYPE REF TO if_apc_wsp_extension.
@@ -131,6 +134,12 @@ CLASS zcl_apc_host IMPLEMENTATION.
 
   METHOD is_open.
     rv_open = mv_open.
+  ENDMETHOD.
+
+  METHOD bindings.
+    DATA lo_binding TYPE REF TO zcl_apc_binding_manager.
+    lo_binding ?= mo_context->if_apc_wsp_server_context~get_binding_manager( ).
+    rt_bindings = lo_binding->bindings( ).
   ENDMETHOD.
 
 ENDCLASS.
