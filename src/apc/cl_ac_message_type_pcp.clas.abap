@@ -6,6 +6,8 @@ CLASS cl_ac_message_type_pcp DEFINITION PUBLIC CREATE PUBLIC.
       RETURNING VALUE(r_message) TYPE REF TO if_ac_message_type_pcp
       RAISING cx_ac_message_type_pcp_error.
   PRIVATE SECTION.
+    CLASS-METHODS unescape IMPORTING iv_text TYPE string
+      RETURNING VALUE(rv_text) TYPE string.
     DATA mt_fields TYPE if_ac_message_type_pcp=>tt_pcp_fields.
     DATA mv_text TYPE string.
     DATA mv_binary TYPE xstring.
@@ -22,9 +24,8 @@ CLASS cl_ac_message_type_pcp IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD if_ac_message_type_pcp~set_field.
-* to measure on A4H (probe PCP1): name case, replacement order, colon in a name and reserved fields.
     IF i_name IS INITIAL OR i_name = 'pcp-action' OR i_name = 'pcp-body-type'
-        OR i_name CS ':' OR i_name CS cl_abap_char_utilities=>newline
+        OR i_name CS cl_abap_char_utilities=>newline
         OR i_name CS cl_abap_char_utilities=>cr_lf(1).
       RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
         EXPORTING message = 'Invalid PCP field name'.
@@ -73,19 +74,17 @@ CLASS cl_ac_message_type_pcp IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD if_ac_message_type_pcp~get_text.
-* to measure on A4H (probe PCP2): cross-type getter behaviour.
     IF mv_binary_mode = abap_true.
-      RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
-        EXPORTING message = 'PCP body is binary'.
+      CLEAR r_message.
+      RETURN.
     ENDIF.
     r_message = mv_text.
   ENDMETHOD.
 
   METHOD if_ac_message_type_pcp~get_binary.
-* to measure on A4H (probe PCP2): cross-type getter behaviour.
     IF mv_binary_mode = abap_false.
-      RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
-        EXPORTING message = 'PCP body is text'.
+      CLEAR r_message.
+      RETURN.
     ENDIF.
     r_message = mv_binary.
   ENDMETHOD.
@@ -103,15 +102,16 @@ CLASS cl_ac_message_type_pcp IMPLEMENTATION.
     FIELD-SYMBOLS <field> TYPE if_ac_message_type_pcp=>ty_pcp_fields.
     LOOP AT mt_fields ASSIGNING <field>.
 * to measure on A4H (probe PCP1): backslash and newline in values.
-      IF <field>-value CS lv_lf OR <field>-value CS cl_abap_char_utilities=>cr_lf(1).
-        RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
-          EXPORTING message = 'PCP field value contains newline'.
-      ENDIF.
       DATA lv_value TYPE string.
+      DATA lv_name TYPE string.
       lv_value = <field>-value.
+      lv_name = <field>-name.
       REPLACE ALL OCCURRENCES OF '\' IN lv_value WITH '\\'.
       REPLACE ALL OCCURRENCES OF ':' IN lv_value WITH '\:'.
-      r_serialized_message = r_serialized_message && <field>-name && ':' && lv_value && lv_lf.
+      REPLACE ALL OCCURRENCES OF lv_lf IN lv_value WITH '\n'.
+      REPLACE ALL OCCURRENCES OF '\' IN lv_name WITH '\\'.
+      REPLACE ALL OCCURRENCES OF ':' IN lv_name WITH '\:'.
+      r_serialized_message = r_serialized_message && lv_name && ':' && lv_value && lv_lf.
     ENDLOOP.
     r_serialized_message = r_serialized_message && lv_lf.
     IF mv_binary_mode = abap_true.
@@ -121,102 +121,118 @@ CLASS cl_ac_message_type_pcp IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
 
-  METHOD if_ac_message_type_pcp~deserialize.
-* to measure on A4H (probe PCP3): malformed input and reserved headers.
-    DATA lv_lf TYPE string.
-    lv_lf = cl_abap_char_utilities=>newline.
-    DATA lv_separator TYPE string.
-    lv_separator = lv_lf && lv_lf.
-    DATA lv_offset TYPE i.
-    FIND FIRST OCCURRENCE OF lv_separator IN i_serialized_message MATCH OFFSET lv_offset.
-    IF sy-subrc <> 0.
-      RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
-        EXPORTING message = 'PCP header has no empty line'.
+  METHOD unescape.
+    DATA lv_index TYPE i.
+    DATA lv_char TYPE c LENGTH 1.
+    DATA lv_escape TYPE abap_bool.
+    DO strlen( iv_text ) TIMES.
+      lv_index = sy-index - 1.
+      lv_char = iv_text+lv_index(1).
+      IF lv_escape = abap_true.
+        CASE lv_char.
+          WHEN 'n'.
+            rv_text = rv_text && cl_abap_char_utilities=>newline.
+          WHEN ':' OR '\'.
+            rv_text = rv_text && lv_char.
+          WHEN OTHERS.
+            rv_text = rv_text && '\' && lv_char.
+        ENDCASE.
+        lv_escape = abap_false.
+      ELSEIF lv_char = '\'.
+        lv_escape = abap_true.
+      ELSE.
+        rv_text = rv_text && lv_char.
+      ENDIF.
+    ENDDO.
+    IF lv_escape = abap_true.
+      rv_text = rv_text && '\'.
     ENDIF.
+  ENDMETHOD.
+
+  METHOD if_ac_message_type_pcp~deserialize.
+    DATA lv_lf TYPE string.
+    DATA lv_separator TYPE string.
+    DATA lv_offset TYPE i.
+    DATA lv_body_offset TYPE i.
     DATA lv_headers TYPE string.
     DATA lv_body TYPE string.
-    lv_headers = i_serialized_message(lv_offset).
-    DATA lv_body_offset TYPE i.
-    lv_body_offset = lv_offset + 2.
-    lv_body = i_serialized_message+lv_body_offset.
     DATA lt_lines TYPE string_table.
-    SPLIT lv_headers AT lv_lf INTO TABLE lt_lines.
+    DATA lv_line TYPE string.
+    DATA lv_colon TYPE i.
+    DATA lv_index TYPE i.
+    DATA lv_char TYPE c LENGTH 1.
+    DATA lv_escape TYPE abap_bool.
+    DATA lv_skip TYPE abap_bool.
     DATA lv_action TYPE abap_bool.
     DATA lv_type TYPE string.
     DATA lv_type_seen TYPE abap_bool.
-    DATA lo_message TYPE REF TO if_ac_message_type_pcp.
-    lo_message = create( ).
-    DATA lv_line TYPE string.
+    DATA lv_name TYPE string.
+    DATA lv_value TYPE string.
+    DATA lv_raw TYPE string.
+    DATA lv_value_offset TYPE i.
+    DATA ls_field TYPE if_ac_message_type_pcp=>ty_pcp_fields.
+    DATA lo_message TYPE REF TO cl_ac_message_type_pcp.
+
+    lv_lf = cl_abap_char_utilities=>newline.
+    lv_separator = lv_lf && lv_lf.
+    FIND FIRST OCCURRENCE OF lv_separator IN i_serialized_message MATCH OFFSET lv_offset.
+    IF sy-subrc = 0.
+      lv_headers = i_serialized_message(lv_offset).
+      lv_body_offset = lv_offset + 2.
+      lv_body = i_serialized_message+lv_body_offset.
+    ELSE.
+      lv_headers = i_serialized_message.
+    ENDIF.
+    SPLIT lv_headers AT lv_lf INTO TABLE lt_lines.
+    CREATE OBJECT lo_message.
     LOOP AT lt_lines INTO lv_line.
-      DATA lv_colon TYPE i.
-      FIND FIRST OCCURRENCE OF ':' IN lv_line MATCH OFFSET lv_colon.
-      IF sy-subrc <> 0 OR lv_colon = 0.
-        RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
-          EXPORTING message = 'Invalid PCP header line'.
+      IF lv_skip = abap_true.
+        lv_skip = abap_false.
+        CONTINUE.
       ENDIF.
-      DATA lv_name TYPE string.
-      DATA lv_value TYPE string.
-      lv_name = lv_line(lv_colon).
-      DATA lv_value_offset TYPE i.
-      lv_value_offset = lv_colon + 1.
-      lv_value = lv_line+lv_value_offset.
-      IF lv_name CS cl_abap_char_utilities=>cr_lf(1)
-          OR lv_value CS cl_abap_char_utilities=>cr_lf(1).
-        RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
-          EXPORTING message = 'PCP header contains carriage return'.
-      ENDIF.
-      DATA lv_unescaped TYPE string.
-      DATA lv_index TYPE i.
-      DATA lv_escape TYPE abap_bool.
-      CLEAR lv_unescaped.
+      lv_colon = -1.
       lv_escape = abap_false.
-      DO strlen( lv_value ) TIMES.
-        DATA lv_char TYPE c LENGTH 1.
+      DO strlen( lv_line ) TIMES.
         lv_index = sy-index - 1.
-        lv_char = lv_value+lv_index(1).
+        lv_char = lv_line+lv_index(1).
         IF lv_escape = abap_true.
-          IF lv_char <> ':' AND lv_char <> '\'.
-            RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
-              EXPORTING message = 'Invalid PCP escape'.
-          ENDIF.
-          lv_unescaped = lv_unescaped && lv_char.
           lv_escape = abap_false.
         ELSEIF lv_char = '\'.
           lv_escape = abap_true.
-        ELSE.
-          lv_unescaped = lv_unescaped && lv_char.
+        ELSEIF lv_char = ':'.
+          lv_colon = lv_index.
+          EXIT.
         ENDIF.
       ENDDO.
-      IF lv_escape = abap_true.
-        RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
-          EXPORTING message = 'Incomplete PCP escape'.
+      IF lv_colon < 0.
+        lv_skip = abap_true.
+        CONTINUE.
       ENDIF.
-      CASE lv_name.
-        WHEN 'pcp-action'.
-          IF lv_unescaped <> 'MESSAGE' OR lv_action = abap_true.
-            RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
-              EXPORTING message = 'Invalid PCP action'.
-          ENDIF.
-          lv_action = abap_true.
-        WHEN 'pcp-body-type'.
-          IF lv_type_seen = abap_true.
-            RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
-              EXPORTING message = 'Duplicate PCP body type'.
-          ENDIF.
+      lv_raw = lv_line(lv_colon).
+      lv_name = unescape( lv_raw ).
+      lv_value_offset = lv_colon + 1.
+      lv_raw = lv_line+lv_value_offset.
+      lv_value = unescape( lv_raw ).
+      IF lv_name = 'pcp-action'.
+        lv_action = abap_true.
+      ELSE.
+        ls_field-name = lv_name.
+        ls_field-value = lv_value.
+        APPEND ls_field TO lo_message->mt_fields.
+        IF lv_name = 'pcp-body-type' AND lv_type_seen = abap_false.
+          lv_type = lv_value.
           lv_type_seen = abap_true.
-          lv_type = lv_unescaped.
-        WHEN OTHERS.
-          lo_message->set_field( i_name = lv_name i_value = lv_unescaped ).
-      ENDCASE.
+        ENDIF.
+      ENDIF.
     ENDLOOP.
-    IF lv_action = abap_false OR ( lv_type <> 'text' AND lv_type <> 'binary' ).
+    IF lv_action = abap_false.
       RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
-        EXPORTING message = 'Missing PCP action or body type'.
+        EXPORTING message = 'Push Channel Protocol message format is not correct.'.
     ENDIF.
     IF lv_type = 'binary'.
-      lo_message->set_binary( cl_http_utility=>decode_x_base64( lv_body ) ).
+      lo_message->if_ac_message_type_pcp~set_binary( cl_http_utility=>decode_x_base64( lv_body ) ).
     ELSE.
-      lo_message->set_text( lv_body ).
+      lo_message->if_ac_message_type_pcp~set_text( lv_body ).
     ENDIF.
     r_message = lo_message.
   ENDMETHOD.
