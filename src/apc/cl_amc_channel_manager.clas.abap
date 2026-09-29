@@ -1,4 +1,4 @@
-CLASS cl_amc_channel_manager DEFINITION PUBLIC CREATE PUBLIC.
+CLASS cl_amc_channel_manager DEFINITION PUBLIC FINAL CREATE PRIVATE.
   PUBLIC SECTION.
     CONSTANTS co_comm_type_synchronous TYPE i VALUE 1.
     CONSTANTS co_comm_type_asynchronous TYPE i VALUE 2.
