@@ -18,8 +18,6 @@ CLASS cl_ac_message_type_pcp IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD deserialize.
-* The transpiler does not dispatch interface class methods. Keep the contract
-* declaration and provide this class entry point until it does.
     r_message = if_ac_message_type_pcp~deserialize( i_serialized_message ).
   ENDMETHOD.
 
@@ -27,7 +25,7 @@ CLASS cl_ac_message_type_pcp IMPLEMENTATION.
 * to measure on A4H (probe PCP1): name case, replacement order, colon in a name and reserved fields.
     IF i_name IS INITIAL OR i_name = 'pcp-action' OR i_name = 'pcp-body-type'
         OR i_name CS ':' OR i_name CS cl_abap_char_utilities=>newline
-        OR i_name CS cl_abap_char_utilities=>cr_lf.
+        OR i_name CS cl_abap_char_utilities=>cr_lf(1).
       RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
         EXPORTING message = 'Invalid PCP field name'.
     ENDIF.
@@ -105,7 +103,7 @@ CLASS cl_ac_message_type_pcp IMPLEMENTATION.
     FIELD-SYMBOLS <field> TYPE if_ac_message_type_pcp=>ty_pcp_fields.
     LOOP AT mt_fields ASSIGNING <field>.
 * to measure on A4H (probe PCP1): backslash and newline in values.
-      IF <field>-value CS lv_lf OR <field>-value CS cl_abap_char_utilities=>cr_lf.
+      IF <field>-value CS lv_lf OR <field>-value CS cl_abap_char_utilities=>cr_lf(1).
         RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
           EXPORTING message = 'PCP field value contains newline'.
       ENDIF.
@@ -145,6 +143,7 @@ CLASS cl_ac_message_type_pcp IMPLEMENTATION.
     SPLIT lv_headers AT lv_lf INTO TABLE lt_lines.
     DATA lv_action TYPE abap_bool.
     DATA lv_type TYPE string.
+    DATA lv_type_seen TYPE abap_bool.
     DATA lo_message TYPE REF TO if_ac_message_type_pcp.
     lo_message = create( ).
     DATA lv_line TYPE string.
@@ -161,6 +160,11 @@ CLASS cl_ac_message_type_pcp IMPLEMENTATION.
       DATA lv_value_offset TYPE i.
       lv_value_offset = lv_colon + 1.
       lv_value = lv_line+lv_value_offset.
+      IF lv_name CS cl_abap_char_utilities=>cr_lf(1)
+          OR lv_value CS cl_abap_char_utilities=>cr_lf(1).
+        RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
+          EXPORTING message = 'PCP header contains carriage return'.
+      ENDIF.
       DATA lv_unescaped TYPE string.
       DATA lv_index TYPE i.
       DATA lv_escape TYPE abap_bool.
@@ -195,10 +199,11 @@ CLASS cl_ac_message_type_pcp IMPLEMENTATION.
           ENDIF.
           lv_action = abap_true.
         WHEN 'pcp-body-type'.
-          IF lv_type IS NOT INITIAL.
+          IF lv_type_seen = abap_true.
             RAISE EXCEPTION TYPE cx_ac_message_type_pcp_error
               EXPORTING message = 'Duplicate PCP body type'.
           ENDIF.
+          lv_type_seen = abap_true.
           lv_type = lv_unescaped.
         WHEN OTHERS.
           lo_message->set_field( i_name = lv_name i_value = lv_unescaped ).
