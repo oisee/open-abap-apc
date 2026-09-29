@@ -25,10 +25,12 @@ ENDCLASS.
 
 CLASS cl_amc_channel_manager IMPLEMENTATION.
   METHOD create_message_producer.
-    RAISE EXCEPTION TYPE cx_amc_error.
+    RAISE EXCEPTION TYPE cx_amc_error
+      EXPORTING iv_reason = 'AMC is not available in this host.'.
   ENDMETHOD.
   METHOD create_message_consumer.
-    RAISE EXCEPTION TYPE cx_amc_error.
+    RAISE EXCEPTION TYPE cx_amc_error
+      EXPORTING iv_reason = 'AMC is not available in this host.'.
   ENDMETHOD.
   METHOD get_consumer_session_id.
     CLEAR r_session_id.

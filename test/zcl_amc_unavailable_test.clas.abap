@@ -1,0 +1,5 @@
+CLASS zcl_amc_unavailable_test DEFINITION PUBLIC FOR TESTING CREATE PUBLIC.
+ENDCLASS.
+
+CLASS zcl_amc_unavailable_test IMPLEMENTATION.
+ENDCLASS.
