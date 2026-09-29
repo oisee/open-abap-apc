@@ -23,7 +23,7 @@ CLASS cx_abap_timer_error IMPLEMENTATION.
       WHEN timer_already_active.
         result = 'Timer object is already active.'.
       WHEN timer_object_not_active.
-        result = 'Timer object is not active.'.
+        result = 'Timer objects is not active.'.
       WHEN OTHERS.
         result = super->get_text( ).
     ENDCASE.
