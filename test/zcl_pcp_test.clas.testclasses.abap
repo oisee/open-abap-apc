@@ -4,6 +4,7 @@ CLASS ltcl_pcp DEFINITION FOR TESTING RISK LEVEL HARMLESS DURATION SHORT FINAL.
     METHODS lenient_headers FOR TESTING RAISING cx_static_check.
     METHODS missing_action_raises FOR TESTING.
     METHODS cross_type_getters FOR TESTING RAISING cx_static_check.
+    METHODS repeated_round_trip FOR TESTING RAISING cx_static_check.
 ENDCLASS.
 
 CLASS ltcl_pcp IMPLEMENTATION.
@@ -78,5 +79,40 @@ CLASS ltcl_pcp IMPLEMENTATION.
     cl_abap_unit_assert=>assert_initial( lo_message->get_text( ) ).
     lo_message->set_text( 'text' ).
     cl_abap_unit_assert=>assert_initial( lo_message->get_binary( ) ).
+  ENDMETHOD.
+
+  METHOD repeated_round_trip.
+    DATA lo_message TYPE REF TO if_ac_message_type_pcp.
+    DATA lv_first TYPE string.
+    DATA lv_second TYPE string.
+    DATA lv_third TYPE string.
+    DATA lt_fields TYPE if_ac_message_type_pcp=>tt_pcp_fields.
+    DATA ls_field TYPE if_ac_message_type_pcp=>ty_pcp_fields.
+    DATA lv_body_types TYPE i.
+    DATA lv_expected_type TYPE string.
+    DO 2 TIMES.
+      lo_message = cl_ac_message_type_pcp=>create( ).
+      lo_message->set_field( i_name = 'custom' i_value = 'a:b' ).
+      IF sy-index = 1.
+        lo_message->set_text( 'text body' ).
+        lv_expected_type = 'text'.
+      ELSE.
+        lo_message->set_binary( '00FF' ).
+        lv_expected_type = 'binary'.
+      ENDIF.
+      lv_first = lo_message->serialize( ).
+      lo_message = cl_ac_message_type_pcp=>deserialize( lv_first ).
+      lv_second = lo_message->serialize( ).
+      lo_message = cl_ac_message_type_pcp=>deserialize( lv_second ).
+      lv_third = lo_message->serialize( ).
+      cl_abap_unit_assert=>assert_equals( act = lv_third exp = lv_first ).
+      lo_message->get_fields( CHANGING c_fields = lt_fields ).
+      CLEAR lv_body_types.
+      LOOP AT lt_fields INTO ls_field WHERE name = 'pcp-body-type'.
+        lv_body_types = lv_body_types + 1.
+        cl_abap_unit_assert=>assert_equals( act = ls_field-value exp = lv_expected_type ).
+      ENDLOOP.
+      cl_abap_unit_assert=>assert_equals( act = lv_body_types exp = 1 ).
+    ENDDO.
   ENDMETHOD.
 ENDCLASS.

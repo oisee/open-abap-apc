@@ -101,6 +101,9 @@ CLASS cl_ac_message_type_pcp IMPLEMENTATION.
     ENDIF.
     FIELD-SYMBOLS <field> TYPE if_ac_message_type_pcp=>ty_pcp_fields.
     LOOP AT mt_fields ASSIGNING <field>.
+      IF <field>-name = 'pcp-action' OR <field>-name = 'pcp-body-type'.
+        CONTINUE.
+      ENDIF.
 * to measure on A4H (probe PCP1): backslash and newline in values.
       DATA lv_value TYPE string.
       DATA lv_name TYPE string.
